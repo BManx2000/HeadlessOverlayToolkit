@@ -92,6 +92,11 @@ public class HOTK_TrackedDevice : MonoBehaviour
         IsValid = true;
 
         var pose = new SteamVR_Utils.RigidTransform(poses[i].mDeviceToAbsoluteTracking);
+        if(OpenVR.Compositor.GetTrackingSpace() != ETrackingUniverseOrigin.TrackingUniverseSeated) {
+            var transform = new SteamVR_Utils.RigidTransform(OpenVR.System.GetSeatedZeroPoseToStandingAbsoluteTrackingPose());
+            transform.Inverse();
+            pose = transform * pose;
+        }
         
         if (Origin != null)
         {

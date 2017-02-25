@@ -642,7 +642,7 @@ public class HOTK_Overlay : MonoBehaviour
             else if (AnchorDevice == AttachmentDevice.World) // Attached to World
             {
                 var t = GetOverlayPosition();
-                overlay.SetOverlayTransformAbsolute(_handle, SteamVR_Render.instance.trackingSpace, ref t);
+                overlay.SetOverlayTransformAbsolute(_handle, ETrackingUniverseOrigin.TrackingUniverseSeated, ref t);
             }
             else
             {
@@ -655,7 +655,7 @@ public class HOTK_Overlay : MonoBehaviour
                     offset.pos.z /= vrcam.origin.localScale.z;
 
                     var t = offset.ToHmdMatrix34();
-                    overlay.SetOverlayTransformAbsolute(_handle, SteamVR_Render.instance.trackingSpace, ref t);
+                    overlay.SetOverlayTransformAbsolute(_handle, ETrackingUniverseOrigin.TrackingUniverseSeated, ref t);
                 }
                 else // Attached to Camera (We are Not Rendering)
                 {
