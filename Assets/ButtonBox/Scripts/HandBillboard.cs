@@ -27,6 +27,12 @@ public class HandBillboard : MonoBehaviour {
     private HOTK_TrackedDevice Device;
 
     private GridButton CurrentButton = null;
+
+    private Vector3 RotaryDirection;
+    private Vector3 RotaryOriginalUp;
+    private float RotationSteps;
+    private int RotaryPosition;
+
     private OverlayLoader MovingOverlay = null;
     private Vector3 MovingOriginalPosition;
     private Quaternion MovingOriginalRotation;
@@ -91,6 +97,24 @@ public class HandBillboard : MonoBehaviour {
         return Mathf.Cos(Mathf.Deg2Rad * LaserAngle) * Hand.transform.forward + Mathf.Sin(Mathf.Deg2Rad * LaserAngle) * -Hand.transform.up;
     }
 
+    public Vector3 LaserUpDirection() {
+        return Mathf.Sin(Mathf.Deg2Rad * LaserAngle) * Hand.transform.forward + Mathf.Cos(Mathf.Deg2Rad * LaserAngle) * Hand.transform.up;
+    }
+
+    public Vector3 PointingDirection() {
+        return DataLoader.Settings.Lasermode ? LaserDirection() : Hand.transform.forward;
+    }
+
+    public Vector3 PointingUpDirection() {
+        return DataLoader.Settings.Lasermode ? LaserUpDirection() : Hand.transform.up;
+    }
+
+    public float AngleBetween(Vector3 a, Vector3 b, Vector3 n) {
+        a = Vector3.ProjectOnPlane(a, n);
+        b = Vector3.ProjectOnPlane(b, n);
+        return Mathf.Rad2Deg*Mathf.Atan2(Vector3.Dot(Vector3.Cross(b, a), n), Vector3.Dot(a, b));
+    }
+
     void SetLaserLength(float length) {
         OwnOverlay.UvOffset.z = OwnOverlay.Scale / length;
         Quaternion laserRot = Quaternion.Euler(new Vector3(LaserAngle, 0, 0));
@@ -111,7 +135,7 @@ public class HandBillboard : MonoBehaviour {
             return;
         }
 
-        OwnOverlay.enabled = ActivityMonitor.Active;
+        OwnOverlay.enabled = ActivityMonitor.Active && !DataLoader.Profile.hidePointer;
         HandOverlay.enabled = true;
 
         if (DataLoader.Settings.Lasermode) {
@@ -229,7 +253,8 @@ public class HandBillboard : MonoBehaviour {
                             KeyboardInput.Down(button.keypress);
                         }
                         else {
-                            //TODO
+                            RotaryDirection = PointingDirection();
+                            RotaryOriginalUp = PointingUpDirection();
                         }
                         ButtonOverlay.OverlayTexture = OverlayTexturePressed;
                     }
@@ -259,11 +284,30 @@ public class HandBillboard : MonoBehaviour {
                 if(CurrentButton.buttonType == ButtonType.Normal) {
                     KeyboardInput.Up(CurrentButton.keypress);
                 }
-                else {
-                    //TODO
-                }
+
                 CurrentButton = null;
                 ButtonOverlay.OverlayTexture = OverlayTexture;
+            }
+            else if(CurrentButton.buttonType != ButtonType.Normal) {
+                float angle = AngleBetween(this.RotaryOriginalUp, PointingUpDirection(), this.RotaryDirection);
+                if(Mathf.Abs(angle) >= CurrentButton.rotaryAngle) {
+                    float sign = Mathf.Sign(angle);
+                    this.RotaryOriginalUp = Quaternion.AngleAxis((float)CurrentButton.rotaryAngle * (-sign), this.RotaryDirection) * this.RotaryOriginalUp;
+                    if(CurrentButton.buttonType == ButtonType.TwoDirectionRotary) {
+                        KeyCombo keypress = sign > 0 ? CurrentButton.cwKeypress : CurrentButton.ccwKeypress;
+                        KeyboardInput.Down(keypress);
+                        KeyboardInput.Up(keypress);
+                    }
+                    else if(CurrentButton.buttonType == ButtonType.MultiPositionRotary) {
+                        int nextPosition = CurrentButton.currentKeypress + (int)sign;
+                        if(nextPosition >= 0 && nextPosition < CurrentButton.multiKeypresses.Count) {
+                            CurrentButton.currentKeypress = nextPosition;
+                            KeyCombo keypress = CurrentButton.multiKeypresses[nextPosition];
+                            KeyboardInput.Down(keypress);
+                            KeyboardInput.Up(keypress);
+                        }
+                    }
+                }
             }
         }
 

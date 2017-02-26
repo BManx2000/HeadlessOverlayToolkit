@@ -15,7 +15,9 @@ public class KeyCombo {
         foreach (Keypress k in keypresses) {
             result = result + k.ToString() + " + ";
         }
-        result = result.Substring(0, result.Length - 3);
+        if (result.Length > 2) {
+            result = result.Substring(0, result.Length - 3);
+        }
         return result;
     }
 }

@@ -8,7 +8,7 @@ public enum ButtonType {
 }
 
 [Serializable]
-public class GridButton {
+public class GridButton : UnityEngine.ISerializationCallbackReceiver {
     public int x;
     public int y;
     public int width;
@@ -22,4 +22,14 @@ public class GridButton {
     public KeyCombo ccwKeypress;
     public List<KeyCombo> multiKeypresses;
     public int defaultKeypress;
+    [NonSerialized]
+    public int currentKeypress;
+
+    public void OnBeforeSerialize() {
+        
+    }
+
+    public void OnAfterDeserialize() {
+        currentKeypress = defaultKeypress;
+    }
 }

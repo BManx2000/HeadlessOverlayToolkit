@@ -56,6 +56,9 @@ public class DataLoader {
             GameObject overlay = (GameObject)GameObject.Instantiate(Resources.Load("Overlay"));
             overlay.GetComponent<OverlayLoader>().ButtonGrid = grid;
             overlay.GetComponent<HOTK_Overlay>().OverlayTexture = new Texture2D(16, 16);
+            foreach(GridButton button in grid.buttons) {
+                button.currentKeypress = button.defaultKeypress;
+            }
         }
         foreach(Profile p in profiles) {
             p.isDefault = p == profile;

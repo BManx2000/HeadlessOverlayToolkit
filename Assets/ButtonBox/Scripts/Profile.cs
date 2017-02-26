@@ -8,6 +8,7 @@ public class Profile : UnityEngine.ISerializationCallbackReceiver, IComparable<P
     public List<ButtonGrid> grids;
     public int index;
     public bool isDefault;
+    public bool hidePointer;
 
     public Profile() {
 
