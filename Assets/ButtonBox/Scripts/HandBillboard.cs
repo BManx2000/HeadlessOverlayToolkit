@@ -27,6 +27,7 @@ public class HandBillboard : MonoBehaviour {
     private HOTK_TrackedDevice Device;
 
     private GridButton CurrentButton = null;
+    private KeyCombo CurrentKeypress = null;
 
     private Vector3 RotaryDirection;
     private Vector3 RotaryOriginalUp;
@@ -247,18 +248,27 @@ public class HandBillboard : MonoBehaviour {
                 if (button != null) {
                     showOverlay = true;
                     closestOverlay.ShowButtonOverlay(button, ButtonOverlay);
-                    if(!DataLoader.SelectingProfile && PressedDown(SteamVR_Controller.ButtonMask.Trigger)) {
-                        CurrentButton = button;
-                        if(button.buttonType == ButtonType.Normal) {
-                            KeyboardInput.Down(button.keypress);
+                    if(!DataLoader.SelectingProfile) {
+                        if (PressedDown(SteamVR_Controller.ButtonMask.Trigger)) {
+                            CurrentButton = button;
+                            CurrentKeypress = button.keypress;
+                            if (button.buttonType == ButtonType.Normal || button.buttonType == ButtonType.ThreeWaySwitch) {
+                                KeyboardInput.Down(button.keypress);
+                            }
+                            else {
+                                RotaryDirection = PointingDirection();
+                                RotaryOriginalUp = PointingUpDirection();
+                            }
+                            ButtonOverlay.OverlayTexture = OverlayTexturePressed;
                         }
-                        else {
-                            RotaryDirection = PointingDirection();
-                            RotaryOriginalUp = PointingUpDirection();
+                        else if(button.buttonType == ButtonType.ThreeWaySwitch && PressedDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+                            CurrentButton = button;
+                            ButtonOverlay.OverlayTexture = OverlayTexturePressed;
+                            CurrentKeypress = TouchpadPos().y >= 0 ? button.cwKeypress : button.ccwKeypress;
+                            KeyboardInput.Down(CurrentKeypress);
                         }
-                        ButtonOverlay.OverlayTexture = OverlayTexturePressed;
                     }
-                    if(DataLoader.SelectingProfile) {
+                    else {
                         profileIndex = closestOverlay.ButtonGrid.buttons.IndexOf(button);
                         profileSet = true;
                     }
@@ -280,15 +290,16 @@ public class HandBillboard : MonoBehaviour {
             }
         }
         else {
-            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger)) {
-                if(CurrentButton.buttonType == ButtonType.Normal) {
-                    KeyboardInput.Up(CurrentButton.keypress);
+            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger) || (PressedUp(SteamVR_Controller.ButtonMask.Touchpad) && CurrentButton.buttonType == ButtonType.ThreeWaySwitch)) {
+                if(CurrentButton.buttonType == ButtonType.Normal || CurrentButton.buttonType == ButtonType.ThreeWaySwitch) {
+                    KeyboardInput.Up(CurrentKeypress);
                 }
 
                 CurrentButton = null;
+                CurrentKeypress = null;
                 ButtonOverlay.OverlayTexture = OverlayTexture;
             }
-            else if(CurrentButton.buttonType != ButtonType.Normal) {
+            else if(CurrentButton.buttonType == ButtonType.TwoDirectionRotary || CurrentButton.buttonType == ButtonType.MultiPositionRotary) {
                 float angle = AngleBetween(this.RotaryOriginalUp, PointingUpDirection(), this.RotaryDirection);
                 if(Mathf.Abs(angle) >= CurrentButton.rotaryAngle) {
                     float sign = Mathf.Sign(angle);
@@ -326,6 +337,10 @@ public class HandBillboard : MonoBehaviour {
 
     public bool PressedUp(ulong button) {
         return SteamVR_Controller.Input((int)Device.Index).GetPressUp(button);
+    }
+
+    public Vector2 TouchpadPos() {
+        return SteamVR_Controller.Input((int)Device.Index).GetAxis();
     }
 
     public Vector3 BallPosition() {

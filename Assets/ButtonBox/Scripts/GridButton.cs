@@ -4,7 +4,8 @@ using System.Collections.Generic;
 public enum ButtonType {
     Normal,
     TwoDirectionRotary,
-    MultiPositionRotary
+    MultiPositionRotary,
+    ThreeWaySwitch
 }
 
 [Serializable]
