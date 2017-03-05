@@ -9,6 +9,8 @@ public class HandBillboard : MonoBehaviour {
     public static float LaserAngle = 60;
 
     public Texture2D OverlayTexture;
+    public Texture2D OverlayTextureRotary;
+    public Texture2D OverlayTextureThreeWay;
     public Texture2D OverlayTexturePressed;
     public Texture2D BallTexture;
     public Texture2D LaserTexture;
@@ -44,6 +46,21 @@ public class HandBillboard : MonoBehaviour {
     private int profileIndex;
 
     bool lastLaserMode;
+
+    private Texture2D OverlayTextureForButton(GridButton button) {
+        if(button == null) {
+            return OverlayTexture;
+        }
+        switch(button.buttonType) {
+            case ButtonType.TwoDirectionRotary:
+            case ButtonType.MultiPositionRotary:
+                return OverlayTextureRotary;
+            case ButtonType.ThreeWaySwitch:
+                return OverlayTextureThreeWay;
+            default:
+                return OverlayTexture;
+        }
+    }
 
     // Use this for initialization
     void Start () {
@@ -247,6 +264,7 @@ public class HandBillboard : MonoBehaviour {
                 GridButton button = closestOverlay.PointedButton(closestPos);
                 if (button != null) {
                     showOverlay = true;
+                    ButtonOverlay.OverlayTexture = OverlayTextureForButton(button);
                     closestOverlay.ShowButtonOverlay(button, ButtonOverlay);
                     if(!DataLoader.SelectingProfile) {
                         if (PressedDown(SteamVR_Controller.ButtonMask.Trigger)) {
@@ -295,9 +313,9 @@ public class HandBillboard : MonoBehaviour {
                     KeyboardInput.Up(CurrentKeypress);
                 }
 
+                ButtonOverlay.OverlayTexture = OverlayTexture;
                 CurrentButton = null;
                 CurrentKeypress = null;
-                ButtonOverlay.OverlayTexture = OverlayTexture;
             }
             else if(CurrentButton.buttonType == ButtonType.TwoDirectionRotary || CurrentButton.buttonType == ButtonType.MultiPositionRotary) {
                 float angle = AngleBetween(this.RotaryOriginalUp, PointingUpDirection(), this.RotaryDirection);

@@ -279,7 +279,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
     /// <param name="text"></param>
     void Log(string text, params object[] vars)
     {
-        Debug.Log(vars == null ? text : string.Format(text, vars));
+        //Debug.Log(vars == null ? text : string.Format(text, vars));
     }
 
     /// <summary>

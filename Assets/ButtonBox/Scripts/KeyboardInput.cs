@@ -70,6 +70,10 @@ public class KeyboardInput {
     }
 
     public static void Down(KeyCombo k) {
+        if(k == null || k.keypresses.Count == 0) {
+            return;
+        }
+
         int numKeys = k.keypresses.Count;
         INPUT[] InputData = new INPUT[numKeys];
 
@@ -87,6 +91,10 @@ public class KeyboardInput {
     }
 
     public static void Up(KeyCombo k) {
+        if (k == null || k.keypresses.Count == 0) {
+            return;
+        }
+
         int numKeys = k.keypresses.Count;
         INPUT[] InputData = new INPUT[numKeys];
 
