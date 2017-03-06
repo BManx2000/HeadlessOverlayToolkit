@@ -55,7 +55,7 @@ public class ActivityMonitor : MonoBehaviour {
             Active = max > 50;
         }
         else {
-            Active = max > 2;
+            Active = max > 1;
         }
     }
 }
