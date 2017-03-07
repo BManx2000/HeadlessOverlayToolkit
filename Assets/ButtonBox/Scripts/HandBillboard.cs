@@ -11,6 +11,7 @@ public class HandBillboard : MonoBehaviour {
     public Texture2D OverlayTexture;
     public Texture2D OverlayTextureRotary;
     public Texture2D OverlayTextureThreeWay;
+    public Texture2D OverlayTextureMultiSwitch;
     public Texture2D OverlayTexturePressed;
     public Texture2D BallTexture;
     public Texture2D LaserTexture;
@@ -57,6 +58,8 @@ public class HandBillboard : MonoBehaviour {
                 return OverlayTextureRotary;
             case ButtonType.ThreeWaySwitch:
                 return OverlayTextureThreeWay;
+            case ButtonType.MultiPositionSwitch:
+                return OverlayTextureMultiSwitch;
             default:
                 return OverlayTexture;
         }
@@ -279,11 +282,25 @@ public class HandBillboard : MonoBehaviour {
                             }
                             ButtonOverlay.OverlayTexture = OverlayTexturePressed;
                         }
-                        else if(button.buttonType == ButtonType.ThreeWaySwitch && PressedDown(SteamVR_Controller.ButtonMask.Touchpad)) {
-                            CurrentButton = button;
-                            ButtonOverlay.OverlayTexture = OverlayTexturePressed;
-                            CurrentKeypress = TouchpadPos().y >= 0 ? button.cwKeypress : button.ccwKeypress;
-                            KeyboardInput.Down(CurrentKeypress);
+                        else if(PressedDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+                            if (button.buttonType == ButtonType.ThreeWaySwitch) {
+                                CurrentButton = button;
+                                ButtonOverlay.OverlayTexture = OverlayTexturePressed;
+                                CurrentKeypress = TouchpadPos().y >= 0 ? button.cwKeypress : button.ccwKeypress;
+                                KeyboardInput.Down(CurrentKeypress);
+                            }
+                            else if(button.buttonType == ButtonType.MultiPositionSwitch) {
+                                CurrentButton = button;
+                                ButtonOverlay.OverlayTexture = OverlayTexturePressed;
+                                int sign = TouchpadPos().y >= 0 ? 1 : -1;
+                                int nextPosition = CurrentButton.currentKeypress + (int)sign;
+                                if (nextPosition >= 0 && nextPosition < CurrentButton.multiKeypresses.Count) {
+                                    CurrentButton.currentKeypress = nextPosition;
+                                    KeyCombo keypress = CurrentButton.multiKeypresses[nextPosition];
+                                    KeyboardInput.Down(keypress);
+                                    KeyboardInput.Up(keypress);
+                                }
+                            }
                         }
                     }
                     else {
@@ -308,8 +325,8 @@ public class HandBillboard : MonoBehaviour {
             }
         }
         else {
-            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger) || (PressedUp(SteamVR_Controller.ButtonMask.Touchpad) && CurrentButton.buttonType == ButtonType.ThreeWaySwitch)) {
-                if(CurrentButton.buttonType == ButtonType.Normal || CurrentButton.buttonType == ButtonType.ThreeWaySwitch) {
+            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger) || (PressedUp(SteamVR_Controller.ButtonMask.Touchpad) && (CurrentButton.buttonType == ButtonType.ThreeWaySwitch || CurrentButton.buttonType == ButtonType.MultiPositionSwitch))) {
+                if(CurrentButton.buttonType == ButtonType.Normal || CurrentButton.buttonType == ButtonType.ThreeWaySwitch || CurrentButton.buttonType == ButtonType.MultiPositionSwitch) {
                     KeyboardInput.Up(CurrentKeypress);
                 }
 

@@ -5,7 +5,8 @@ public enum ButtonType {
     Normal,
     TwoDirectionRotary,
     MultiPositionRotary,
-    ThreeWaySwitch
+    ThreeWaySwitch,
+    MultiPositionSwitch
 }
 
 [Serializable]
