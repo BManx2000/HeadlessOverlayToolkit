@@ -11,7 +11,9 @@ public class HandBillboard : MonoBehaviour {
     public Texture2D OverlayTexture;
     public Texture2D OverlayTextureRotary;
     public Texture2D OverlayTextureThreeWay;
+    public Texture2D OverlayTextureLeftRight;
     public Texture2D OverlayTextureMultiSwitch;
+    public Texture2D OverlayTextureMultiLeftRight;
     public Texture2D OverlayTexturePressed;
     public Texture2D BallTexture;
     public Texture2D LaserTexture;
@@ -48,6 +50,12 @@ public class HandBillboard : MonoBehaviour {
 
     bool lastLaserMode;
 
+    private bool TouchModeTouchpadWasActive;
+    private bool isLeftRight;
+    private KeyCombo keypressToRelease;
+
+    private Profile lastProfile;
+
     private Texture2D OverlayTextureForButton(GridButton button) {
         if(button == null) {
             return OverlayTexture;
@@ -57,9 +65,9 @@ public class HandBillboard : MonoBehaviour {
             case ButtonType.MultiPositionRotary:
                 return OverlayTextureRotary;
             case ButtonType.ThreeWaySwitch:
-                return OverlayTextureThreeWay;
+                return button.isLeftRight ? OverlayTextureLeftRight : OverlayTextureThreeWay;
             case ButtonType.MultiPositionSwitch:
-                return OverlayTextureMultiSwitch;
+                return button.isLeftRight ? OverlayTextureMultiLeftRight : OverlayTextureMultiSwitch;
             default:
                 return OverlayTexture;
         }
@@ -99,15 +107,13 @@ public class HandBillboard : MonoBehaviour {
 
         if (lastLaserMode) {
             OwnOverlay.OverlayTexture = LaserTexture;
-            OwnOverlay.Alpha = 0.5f;
             OwnOverlay.Scale = 0.002f;
             OwnOverlay.AnchorPoint = HOTK_Overlay.AttachmentPoint.Center;
             SetLaserLength(0.1f);
         }
         else {
             OwnOverlay.OverlayTexture = BallTexture;
-            OwnOverlay.Alpha = 1;
-            OwnOverlay.Scale = 0.025f;
+            OwnOverlay.Scale = 0.02f;
             OwnOverlay.AnchorPoint = HOTK_Overlay.AttachmentPoint.FlatAbove;
             OwnOverlay.UvOffset.z = 1;
             OwnOverlay.AnchorOffset = Vector3.zero;
@@ -145,6 +151,11 @@ public class HandBillboard : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
+        if(keypressToRelease != null) {
+            KeyboardInput.Up(keypressToRelease);
+            keypressToRelease = null;
+        }
+
         if(DataLoader.Settings.Lasermode != lastLaserMode) {
             UpdateLaserMode();
         }
@@ -158,6 +169,8 @@ public class HandBillboard : MonoBehaviour {
 
         OwnOverlay.enabled = ActivityMonitor.Active && !DataLoader.Profile.hidePointer;
         HandOverlay.enabled = true;
+        OwnOverlay.Alpha = (float)DataLoader.Profile.pointerAlpha;
+        HandOverlay.Alpha = (float)DataLoader.Profile.controllerAlpha;
 
         if (DataLoader.Settings.Lasermode) {
             transform.position = Hand.transform.position;
@@ -242,6 +255,16 @@ public class HandBillboard : MonoBehaviour {
         }
         bool profileSet = false;
 
+        if(CurrentButton != null) {
+            isLeftRight = CurrentButton.isLeftRight;
+        }
+
+        Vector2 touchPos = TouchpadPos();
+        bool touchModeTouchpadActive = Mathf.Abs(isLeftRight ? touchPos.x : touchPos.y) >= 0.5;
+        bool touchModeTouchpadPressed = touchModeTouchpadActive && !this.TouchModeTouchpadWasActive;
+        bool touchModeTouchpadReleased = !touchModeTouchpadActive && this.TouchModeTouchpadWasActive;
+        this.TouchModeTouchpadWasActive = touchModeTouchpadActive;
+
         if (CurrentButton == null) {
             bool showOverlay = false;
             OverlayLoader closestOverlay = null;
@@ -282,17 +305,18 @@ public class HandBillboard : MonoBehaviour {
                             }
                             ButtonOverlay.OverlayTexture = OverlayTexturePressed;
                         }
-                        else if(PressedDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+                        else if((!DataLoader.Settings.OculusTouchMode && PressedDown(SteamVR_Controller.ButtonMask.Touchpad)) ||
+                            (DataLoader.Settings.OculusTouchMode && touchModeTouchpadPressed)) {
                             if (button.buttonType == ButtonType.ThreeWaySwitch) {
                                 CurrentButton = button;
                                 ButtonOverlay.OverlayTexture = OverlayTexturePressed;
-                                CurrentKeypress = TouchpadPos().y >= 0 ? button.cwKeypress : button.ccwKeypress;
+                                CurrentKeypress = (CurrentButton.isLeftRight ? touchPos.x : touchPos.y) >= 0 ? button.cwKeypress : button.ccwKeypress;
                                 KeyboardInput.Down(CurrentKeypress);
                             }
                             else if(button.buttonType == ButtonType.MultiPositionSwitch) {
                                 CurrentButton = button;
                                 ButtonOverlay.OverlayTexture = OverlayTexturePressed;
-                                int sign = TouchpadPos().y >= 0 ? 1 : -1;
+                                int sign = (CurrentButton.isLeftRight ? touchPos.x : touchPos.y) >= 0 ? 1 : -1;
                                 int nextPosition = CurrentButton.currentKeypress + (int)sign;
                                 if (nextPosition >= 0 && nextPosition < CurrentButton.multiKeypresses.Count) {
                                     CurrentButton.currentKeypress = nextPosition;
@@ -325,7 +349,7 @@ public class HandBillboard : MonoBehaviour {
             }
         }
         else {
-            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger) || (PressedUp(SteamVR_Controller.ButtonMask.Touchpad) && (CurrentButton.buttonType == ButtonType.ThreeWaySwitch || CurrentButton.buttonType == ButtonType.MultiPositionSwitch))) {
+            if(PressedUp(SteamVR_Controller.ButtonMask.Trigger) || (((!DataLoader.Settings.OculusTouchMode && PressedUp(SteamVR_Controller.ButtonMask.Touchpad)) || (DataLoader.Settings.OculusTouchMode && touchModeTouchpadReleased)) && (CurrentButton.buttonType == ButtonType.ThreeWaySwitch || CurrentButton.buttonType == ButtonType.MultiPositionSwitch))) {
                 if(CurrentButton.buttonType == ButtonType.Normal || CurrentButton.buttonType == ButtonType.ThreeWaySwitch || CurrentButton.buttonType == ButtonType.MultiPositionSwitch) {
                     KeyboardInput.Up(CurrentKeypress);
                 }
@@ -342,7 +366,7 @@ public class HandBillboard : MonoBehaviour {
                     if(CurrentButton.buttonType == ButtonType.TwoDirectionRotary) {
                         KeyCombo keypress = sign > 0 ? CurrentButton.cwKeypress : CurrentButton.ccwKeypress;
                         KeyboardInput.Down(keypress);
-                        KeyboardInput.Up(keypress);
+                        keypressToRelease = keypress;
                     }
                     else if(CurrentButton.buttonType == ButtonType.MultiPositionRotary) {
                         int nextPosition = CurrentButton.currentKeypress + (int)sign;
@@ -350,7 +374,7 @@ public class HandBillboard : MonoBehaviour {
                             CurrentButton.currentKeypress = nextPosition;
                             KeyCombo keypress = CurrentButton.multiKeypresses[nextPosition];
                             KeyboardInput.Down(keypress);
-                            KeyboardInput.Up(keypress);
+                            keypressToRelease = keypress;
                         }
                     }
                 }

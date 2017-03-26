@@ -9,6 +9,8 @@ public class Profile : UnityEngine.ISerializationCallbackReceiver, IComparable<P
     public int index;
     public bool isDefault;
     public bool hidePointer;
+    public double pointerAlpha;
+    public double controllerAlpha;
 
     public Profile() {
 

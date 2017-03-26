@@ -4,4 +4,5 @@ using System.IO;
 [Serializable]
 public class Settings {
     public bool Lasermode;
+    public bool OculusTouchMode;
 }

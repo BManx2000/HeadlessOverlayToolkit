@@ -24,6 +24,7 @@ public class GridButton : UnityEngine.ISerializationCallbackReceiver {
     public KeyCombo ccwKeypress;
     public List<KeyCombo> multiKeypresses;
     public int defaultKeypress;
+    public bool isLeftRight;
     [NonSerialized]
     public int currentKeypress;
 
