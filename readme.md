@@ -8,7 +8,7 @@ DCS A-10C Demonstration Video:
 https://www.youtube.com/watch?v=a7keXsamgZw&feature=youtu.be
 
 ## Download
-https://github.com/BManx2000/VirtualButtonBox/releases/download/1.0/Virtual_Button_Box_1.0.zip
+https://github.com/BManx2000/VirtualButtonBox/releases/download/1.1/Virtual.Button.Box.1.1.zip
 
 ## Documentation
 https://github.com/BManx2000/VirtualButtonBox/wiki
