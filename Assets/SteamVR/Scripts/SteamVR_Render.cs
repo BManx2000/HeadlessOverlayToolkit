@@ -165,7 +165,7 @@ public class SteamVR_Render : MonoBehaviour
 				if (!compositor.CanRenderScene())
 					continue;
 
-				compositor.SetTrackingSpace(trackingSpace);
+				//compositor.SetTrackingSpace(trackingSpace);
 
 #if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 				SteamVR_Utils.QueueEventOnRenderThread(SteamVR.Unity.k_nRenderEventID_WaitGetPoses);
